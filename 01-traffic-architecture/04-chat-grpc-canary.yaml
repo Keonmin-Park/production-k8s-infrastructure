@@ -1,0 +1,142 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: chat-service
+  namespace: default
+  labels:
+    app: chat-service
+spec:
+  ports:
+    - port: 50051
+      name: http
+      appProtocol: http
+      targetPort: 50051
+  selector:
+    app: chat-service
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: chat-service-dr
+  namespace: default
+spec:
+  host: chat-service.default.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+    connectionPool:
+      http:
+        http2MaxRequests: 10000
+        maxRequestsPerConnection: 100
+  subsets:
+    - name: v1
+      labels:
+        version: v1
+    - name: v2
+      labels:
+        version: v2
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: chat-service-vs
+  namespace: default
+spec:
+  hosts:
+    - "chat.infra.internal"
+    - "chat-service.default.svc.cluster.local"
+  gateways:
+    - istio-system/istio-ingressgateway
+    - mesh
+  http:
+    - match:
+        - uri:
+            prefix: /chat.v1.ChatService/SendMessage
+        - uri:
+            prefix: /
+      route:
+        - destination:
+            host: chat-service.default.svc.cluster.local
+            subset: v1
+          weight: 90
+        - destination:
+            host: chat-service.default.svc.cluster.local
+            subset: v2
+          weight: 10
+      timeout: 5s
+      retries:
+        attempts: 2
+        perTryTimeout: 1s
+        retryOn: "gateway-error,connect-failure,refused-stream"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chat-service-v1
+  namespace: default
+  labels:
+    app: chat-service
+    version: v1
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: chat-service
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: chat-service
+        version: v1
+    spec:
+      containers:
+        - name: chat-server
+          image: hashicorp/http-echo:1.0.0
+          args:
+            - "-listen=:50051"
+            - "-text={\"version\":\"v1\",\"status\":\"ok\",\"cluster\":\"core-cluster\",\"pool\":\"stable-90%\"}\n"
+          ports:
+            - containerPort: 50051
+          resources:
+            requests:
+              cpu: 100m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chat-service-v2
+  namespace: default
+  labels:
+    app: chat-service
+    version: v2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: chat-service
+      version: v2
+  template:
+    metadata:
+      labels:
+        app: chat-service
+        version: v2
+    spec:
+      containers:
+        - name: chat-server
+          image: hashicorp/http-echo:1.0.0
+          args:
+            - "-listen=:50051"
+            - "-text={\"version\":\"v2\",\"status\":\"ok\",\"cluster\":\"core-cluster\",\"pool\":\"CANARY-10%\"}\n"
+          ports:
+            - containerPort: 50051
+          resources:
+            requests:
+              cpu: 100m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi

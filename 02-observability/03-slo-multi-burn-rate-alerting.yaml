@@ -1,0 +1,98 @@
+# -------------------------------------------------------------
+# Google SRE Book Standard: Multi-Window Multi-Burn-Rate SLI/SLO Alerting
+# Target Service: chat-service (Target Availability: 99.9%, Error Budget: 0.1%)
+# -------------------------------------------------------------
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: chat-service-slo-alerts
+  namespace: monitoring
+  labels:
+    role: alert-rules
+    release: prometheus-stack
+spec:
+  groups:
+    - name: chat-service-slo-burn-rate
+      rules:
+        # -----------------------------------------------------------
+        # [Critical Page] 1시간 동안 에러 버짓의 2% 이상 소진 (Burn Rate 14.4x)
+        # 긴급 호출 (전파 시간: 2분 이내 빠른 감지, 짧은 윈도우 5분과 긴 윈도우 1시간 동시 만족)
+        # -----------------------------------------------------------
+        - alert: ChatServiceHighErrorBudgetBurnRateFast
+          expr: |
+            (
+              sum(rate(istio_requests_total{reporter="destination", destination_workload="chat-service-v1", response_code=~"5.*"}[1h]))
+              /
+              sum(rate(istio_requests_total{reporter="destination", destination_workload="chat-service-v1"}[1h]))
+              > (14.4 * 0.001)
+            )
+            and
+            (
+              sum(rate(istio_requests_total{reporter="destination", destination_workload="chat-service-v1", response_code=~"5.*"}[5m]))
+              /
+              sum(rate(istio_requests_total{reporter="destination", destination_workload="chat-service-v1"}[5m]))
+              > (14.4 * 0.001)
+            )
+          for: 2m
+          labels:
+            severity: critical
+            tier: p1
+            service: chat-service
+          annotations:
+            summary: "[Critical] Chat Service Error Budget 급속 소진 중 (Burn Rate 14.4x)"
+            description: "현재 Chat Service가 1시간 및 5분 윈도우에서 에러 예산의 2%를 1시간 만에 소진하는 심각한 장애 상태입니다. 즉시 온콜 엔지니어 투입이 필요합니다."
+
+        # -----------------------------------------------------------
+        # [Critical Page] 6시간 동안 에러 버짓의 5% 이상 소진 (Burn Rate 6.0x)
+        # -----------------------------------------------------------
+        - alert: ChatServiceHighErrorBudgetBurnRateSlow
+          expr: |
+            (
+              sum(rate(istio_requests_total{reporter="destination", destination_workload="chat-service-v1", response_code=~"5.*"}[6h]))
+              /
+              sum(rate(istio_requests_total{reporter="destination", destination_workload="chat-service-v1"}[6h]))
+              > (6.0 * 0.001)
+            )
+            and
+            (
+              sum(rate(istio_requests_total{reporter="destination", destination_workload="chat-service-v1", response_code=~"5.*"}[30m]))
+              /
+              sum(rate(istio_requests_total{reporter="destination", destination_workload="chat-service-v1"}[30m]))
+              > (6.0 * 0.001)
+            )
+          for: 15m
+          labels:
+            severity: critical
+            tier: p1
+            service: chat-service
+          annotations:
+            summary: "[Critical] Chat Service Error Budget 지속 소진 중 (Burn Rate 6.0x)"
+            description: "현재 Chat Service가 6시간 윈도우에서 에러 예산의 5%를 소진하는 지속적인 장애 상태입니다."
+
+        # -----------------------------------------------------------
+        # [Warning Ticket] 3일 동안 에러 버짓의 10% 이상 소진 (Burn Rate 1.0x)
+        # 티켓 발급 (업무 시간 내 조사, 야간 온콜 호출 없음)
+        # -----------------------------------------------------------
+        - alert: ChatServiceErrorBudgetBurnRateLow
+          expr: |
+            (
+              sum(rate(istio_requests_total{reporter="destination", destination_workload="chat-service-v1", response_code=~"5.*"}[3d]))
+              /
+              sum(rate(istio_requests_total{reporter="destination", destination_workload="chat-service-v1"}[3d]))
+              > (1.0 * 0.001)
+            )
+            and
+            (
+              sum(rate(istio_requests_total{reporter="destination", destination_workload="chat-service-v1", response_code=~"5.*"}[6h]))
+              /
+              sum(rate(istio_requests_total{reporter="destination", destination_workload="chat-service-v1"}[6h]))
+              > (1.0 * 0.001)
+            )
+          for: 1h
+          labels:
+            severity: warning
+            tier: p3
+            service: chat-service
+          annotations:
+            summary: "[Warning] Chat Service Error Budget 완만한 소진 (Burn Rate 1.0x)"
+            description: "Chat Service의 장기 에러 예산이 소진되고 있습니다. Jira 티켓을 생성하여 업무 시간 중 원인을 파악하세요."

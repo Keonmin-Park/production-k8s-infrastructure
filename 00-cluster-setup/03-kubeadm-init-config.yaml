@@ -1,0 +1,60 @@
+apiVersion: kubeadm.k8s.io/v1beta3
+kind: InitConfiguration
+localAPIEndpoint:
+  advertiseAddress: "0.0.0.0"
+  bindPort: 6443
+nodeRegistration:
+  criSocket: "unix:///run/containerd/containerd.sock"
+  imagePullPolicy: IfNotPresent
+  taints: []
+---
+apiVersion: kubeadm.k8s.io/v1beta3
+kind: ClusterConfiguration
+kubernetesVersion: "${K8S_VERSION}"
+clusterName: "${CLUSTER_NAME}"
+# kube-vip 가상 IP (포트 6443)
+controlPlaneEndpoint: "${CONTROL_PLANE_VIP}:6443"
+networking:
+  podSubnet: "${POD_SUBNET}"
+  serviceSubnet: "${SERVICE_SUBNET}"
+  dnsDomain: "cluster.local"
+apiServer:
+  certSANs:
+    - "${CONTROL_PLANE_VIP}"                      # VIP
+    - "${CP1_IP}"                                 # CP 1
+    - "${CP2_IP}"                                 # CP 2
+    - "${CP3_IP}"                                 # CP 3
+    - "${VIP_DOMAIN}"
+    - "127.0.0.1"
+    - "localhost"
+  extraArgs:
+    # 감사(Audit) 로그 및 메트릭 수집 허용
+    profiling: "true"
+controllerManager:
+  extraArgs:
+    # Prometheus에서 메트릭 스크랩 가능하도록 바인드 주소 개방
+    bind-address: "0.0.0.0"
+scheduler:
+  extraArgs:
+    bind-address: "0.0.0.0"
+etcd:
+  local:
+    extraArgs:
+      # 대규모 트래픽 대비 etcd 스냅샷 및 캐시 튜닝
+      listen-metrics-urls: "http://0.0.0.0:2381"
+      quota-backend-bytes: "8589934592"     # 8GB etcd 스토리지 쿼터
+---
+apiVersion: kubelet.config.k8s.io/v1beta1
+kind: KubeletConfiguration
+cgroupDriver: systemd
+# Pod 최대 개수 확장 (기본 110개 -> 250개)
+maxPods: 250
+# 노드 리소스 고갈 방지 (Eviction Hard 임계치)
+evictionHard:
+  memory.available: "500Mi"
+  nodefs.available: "10%"
+  nodefs.inodesFree: "5%"
+  imagefs.available: "15%"
+# 로그 로테이션 설정
+containerLogMaxSize: "50Mi"
+containerLogMaxFiles: 5

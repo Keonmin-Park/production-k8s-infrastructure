@@ -1,0 +1,25 @@
+controller:
+  kind: DaemonSet
+  daemonset:
+    useHostPort: true
+    ports:
+      http: 80
+      https: 443
+      stat: 1024
+  config:
+    max-connections: "100000"
+    nbthread: "4"
+    tune-bufsize: "32768"
+    http-reuse: "aggressive"
+    timeout-client: "30s"
+    timeout-server: "30s"
+    timeout-keep-alive: "60s"
+    backend-server-slots-increment: "32"
+    send-proxy-v2: "true"
+  resources:
+    requests:
+      cpu: "2000m"
+      memory: "2Gi"
+    limits:
+      cpu: "4000m"
+      memory: "4Gi"
