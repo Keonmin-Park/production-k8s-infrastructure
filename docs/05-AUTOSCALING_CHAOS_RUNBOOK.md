@@ -1,6 +1,6 @@
 # 05-autoscaling-chaos: HPA 파드 오토스케일링 & 카오스 엔지니어링 (노드 장애 주입)
 
-대규모 트래픽 급증(Spike) 상황을 대비하여, Kubernetes HPA(Horizontal Pod Autoscaler) 기반의 동적 파드 확장(2개 ➡️ 10개)과 고부하 서빙 중 실전 노드 하드웨어 불시 장애(Hard Crash / Kernel Panic)를 시뮬레이션한 카오스 엔지니어링(Chaos Engineering) 실증 런북입니다.
+대규모 트래픽 급증(Spike) 상황을 대비하여, Kubernetes HPA(Horizontal Pod Autoscaler) 기반의 동적 파드 확장(2개 -> 10개)과 고부하 서빙 중 실전 노드 하드웨어 불시 장애(Hard Crash / Kernel Panic)를 시뮬레이션한 카오스 엔지니어링(Chaos Engineering) 실증 런북입니다.
 
 ---
 
@@ -17,7 +17,7 @@
 [k8s-worker-01] [k8s-worker-02] [k8s-worker-03]
 (4 Pods)        (2 Pods)        (4 Pods)
                       │
-           💥 [노드 불시 다운 주입!]
+            [노드 불시 다운 주입]
          (systemctl stop kubelet containerd)
                       │
                       ▼
@@ -28,7 +28,7 @@
        * Istio Ingress Gateway HA 트래픽 우회
 ```
 
-### 💡 오토스케일링 & 복원력 비교표
+### 오토스케일링 & 복원력 비교표
 <table header-row="true">
 <tr>
 <td>비교 항목</td>
@@ -38,7 +38,7 @@
 <tr>
 <td>**트래픽 스파이크 대응**</td>
 <td>수동으로 레플리카를 증설하는 동안 API 서버 지연 및 503 발생</td>
-<td>**메트릭 기반 실시간 자동 확장(2개 ➡️ 10개)**으로 5초 이내 즉각 버스트 흡수</td>
+<td>**메트릭 기반 실시간 자동 확장(2개 -> 10개)**으로 5초 이내 즉각 버스트 흡수</td>
 </tr>
 <tr>
 <td>**인프라 비용 효율성**</td>
@@ -108,8 +108,8 @@ Duration: 180.0s | Total Requests: 96,776 | RPS: 538/s | Success: 96,776 | Faile
 
 - **HPA 반응 로그**:
   - 초기: `chat-service-v1` (2 Replicas, CPU 2%/40%)
-  - 부하 인입 30초: CPU 122%/40% 감지 ➡️ **2개 ➡️ 7개로 1차 스케일 아웃**
-  - 부하 인입 60초: 파드 7개의 CPU가 여전히 70m/20m(350%) 유지 ➡️ **10개(최대치)로 2차 스케일 아웃 완료 (`10/10 READY`)**
+  - 부하 인입 30초: CPU 122%/40% 감지 -> **2개 -> 7개로 1차 스케일 아웃**
+  - 부하 인입 60초: 파드 7개의 CPU가 여전히 70m/20m(350%) 유지 -> **10개(최대치)로 2차 스케일 아웃 완료 (`10/10 READY`)**
   - 파드가 3개 워커 노드(`k8s-worker-01`, `02`, `03`)에 완벽히 분산되어 부하를 균등 분산 처리함.
 
 ---
@@ -129,7 +129,7 @@ sudo systemctl stop kubelet containerd
    ```plain text
    NAME            STATUS     ROLES           AGE     VERSION    INTERNAL-IP
    k8s-worker-01   Ready      <none>          3h37m   v1.29.10   10.40.101.184
-   k8s-worker-02   NotReady   <none>          3h35m   v1.29.10   10.40.101.185  <-- 💥 다운 감지!
+   k8s-worker-02   NotReady   <none>          3h35m   v1.29.10   10.40.101.185  <-- 다운 감지
    k8s-worker-03   Ready      <none>          3h35m   v1.29.10   10.40.101.186
    ```
 2. **파드 격리 및 퇴거**:
@@ -139,17 +139,17 @@ sudo systemctl stop kubelet containerd
 
 ## 4. 트러블슈팅: 노드 다운 시 Ingress Gateway 단일 장애점(SPOF) 극복
 
-### 🚨 장애 현상
+### 장애 현상
 노드가 `NotReady`가 된 직후, Bastion에서 트래픽을 프로빙했을 때 예상과 달리 **`HTTP 503 Service Unavailable`** 에러가 발생했습니다.
 
-### 🔬 근본 원인 (Root Cause)
+### 근본 원인 (Root Cause)
 1. **단일 Ingress Gateway의 SPOF(단일 장애점)**:
    - `istio-ingressgateway`가 단 1개의 파드(`replicas: 1`)로 구동 중이었으며, 하필 그 파드가 장애가 발생한 `k8s-worker-02`에 단독 스케줄링되어 있었습니다.
 2. **K8s 파드 기본 퇴거 타임아웃 (`tolerationSeconds: 300`)**:
    - 쿠버네티스 파드의 기본 스펙에는 노드 장애 시 일시적 네트워크 플래핑을 방지하기 위해 `tolerationSeconds: 300` (5분)이 선언되어 있습니다.
    - 따라서 노드가 죽어도 K8s는 **기본 5분 동안 파드를 강제 삭제하지 않고 대기**하므로, 단일 게이트웨이 파드가 죽은 노드에 갇혀 5분 동안 클러스터 전체 Ingress 엔드포인트가 비어 503 에러가 발생한 것입니다.
 
-### 🛠️ 해결 방안: Ingress Gateway 고가용성(HA) 다중화
+### 해결 방안: Ingress Gateway 고가용성(HA) 다중화
 ```bash
 # 인그레스 게이트웨이를 2개로 고가용성(HA) 스케일 아웃
 kubectl -n istio-system scale deploy istio-ingressgateway --replicas=2
@@ -157,7 +157,7 @@ kubectl -n istio-system scale deploy istio-ingressgateway --replicas=2
 - 스케일 아웃 명령 실행 즉시 살아있는 `k8s-worker-03`에 **신규 게이트웨이 파드가 4초 만에 `Running`** 상태로 기동되었습니다.
 - 게이트웨이가 뜨자마자 클러스터 전체 트래픽이 즉시 **`HTTP 200 OK`로 100% 정상 복구**되었습니다!
 
-> **💡 운영 시사점 및 아키텍처 원칙**:
+> **운영 시사점 및 아키텍처 원칙**:
 > Ingress Gateway, CoreDNS, Ingress Controller 등 클러스터 전역 트래픽 진입점은 **절대로 단일 복제본(`replicas: 1`)으로 운영해서는 안 되며**, 반드시 **`replicas: 2` 이상 + `PodAntiAffinity`**를 적용하여 물리 노드 간 분산 배치를 강제해야만 노드 불시 장애 시 무중단을 달성할 수 있습니다.
 
 ---
@@ -178,11 +178,11 @@ sudo systemctl start containerd kubelet
    k8s-cp-02       Ready    control-plane   3h45m   v1.29.10   10.40.101.182
    k8s-cp-03       Ready    control-plane   3h46m   v1.29.10   10.40.101.183
    k8s-worker-01   Ready    <none>          3h39m   v1.29.10   10.40.101.184
-   k8s-worker-02   Ready    <none>          3h37m   v1.29.10   10.40.101.185  <-- 정상 복구!
+   k8s-worker-02   Ready    <none>          3h37m   v1.29.10   10.40.101.185  <-- 정상 복구
    k8s-worker-03   Ready    <none>          3h36m   v1.29.10   10.40.101.186
    ```
 2. **워커 노드 전역 L7 인입 검증**:
-   - `http://10.40.101.184/` ➡️ `HTTP 200 OK`
-   - `http://10.40.101.185/` ➡️ `HTTP 200 OK`
-   - `http://10.40.101.186/` ➡️ `HTTP 200 OK`
+   - `http://10.40.101.184/` -> `HTTP 200 OK`
+   - `http://10.40.101.185/` -> `HTTP 200 OK`
+   - `http://10.40.101.186/` -> `HTTP 200 OK`
 3. **리소스 상태**: 6개 노드 전체 CPU 1~6%, 메모리 10~32%로 최적의 안정 상태 유지 확인.

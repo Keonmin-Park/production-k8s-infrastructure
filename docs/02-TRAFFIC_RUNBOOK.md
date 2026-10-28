@@ -29,7 +29,7 @@
  (stable-90%)      (CANARY-10%)
 ```
 
-### 💡 핵심 아키텍처 설계 원칙
+### 핵심 아키텍처 설계 원칙
 - **L7 트래픽 수용 (HAProxy Ingress HostPort)**: 워커 노드 물리 포트(`80`, `443`)를 점유하여 iptables NAT 오버헤드를 배제하고 멀티스레딩 이벤트 처리(`nbthread: 4`)를 적용.
 - **클라이언트 원본 IP 보존 (PROXY Protocol v2)**: L4 로드밸런서 및 인그레스에서 Istio Envoy Gateway까지 바이너리 헤더로 실제 클라이언트 원본 IP를 무결하게 보존.
 - **서비스 메시 & 제로 트러스트 (Istio STRICT mTLS)**: 클러스터 내부 파드 간 통신을 mTLS로 상호 암호화하고, `VirtualService`를 통해 90:10 가중치 기반 카나리 배포 적용.
@@ -98,7 +98,7 @@ date: Mon, 26 Oct 2026 04:26:02 GMT
 content-type: text/plain; charset=utf-8
 content-length: 9
 ```
-> 💡 **검증 확인**: 워커 노드의 물리 80번 포트가 HAProxy에 의해 완벽하게 바인딩되어 외부 트래픽 수신 준비가 완료되었음을 확인했습니다.
+> **검증 확인**: 워커 노드의 물리 80번 포트가 HAProxy에 의해 완벽하게 바인딩되어 외부 트래픽 수신 준비가 완료되었음을 확인했습니다.
 
 ---
 
@@ -122,7 +122,7 @@ NAME                                    READY   STATUS    RESTARTS   AGE   IP   
 istio-ingressgateway-567dc944d7-zmkmf   1/1     Running   0          31s   10.0.5.214   k8s-worker-02   <none>           <none>
 istiod-5668557955-hdcj5                 1/1     Running   0          39s   10.0.2.191   k8s-worker-03   <none>           <none>
 ```
-> 🚀 **검증 통과**: 제어면(`istiod`)과 진입 게이트웨이(`istio-ingressgateway`)가 각각 `k8s-worker-03`과 `k8s-worker-02`에 정상 스케줄링되어 **`1/1 Running`**을 달성했습니다.
+> **검증 결과**: 제어면(`istiod`)과 진입 게이트웨이(`istio-ingressgateway`)가 각각 `k8s-worker-03`과 `k8s-worker-02`에 정상 스케줄링되어 **`1/1 Running`**을 달성했습니다.
 
 ---
 
@@ -141,7 +141,7 @@ HAProxy Ingress Controller(by HAProxy Technologies)에서 백엔드로 PROXY Pro
 ```powershell
 kubectl -n istio-system annotate svc istio-ingressgateway haproxy.org/send-proxy-protocol="proxy-v2" --overwrite
 ```
-> 💡 **원리**: Envoy 리스너에 `proxy_protocol` 필터가 켜져 있으면, HAProxy가 PROXY v2 헤더 없이 일반 HTTP 요청을 전송할 경우 Envoy가 비정상 패킷으로 판단하여 즉시 TCP Reset(`502 Bad Gateway`)을 반환합니다. 위 어노테이션을 통해 HAProxy 백엔드 설정에 `send-proxy-v2`가 주입되어 양 프록시 간 정상적인 핸드셰이크가 체결됩니다.
+> **동작 원리**: Envoy 리스너에 `proxy_protocol` 필터가 켜져 있으면, HAProxy가 PROXY v2 헤더 없이 일반 HTTP 요청을 전송할 경우 Envoy가 비정상 패킷으로 판단하여 즉시 TCP Reset(`502 Bad Gateway`)을 반환합니다. 위 어노테이션을 통해 HAProxy 백엔드 설정에 `send-proxy-v2`가 주입되어 양 프록시 간 정상적인 핸드셰이크가 체결됩니다.
 
 ---
 
@@ -162,7 +162,7 @@ chat-service-v1-77dcdd8dd7-ngnqf   2/2     Running   0          25s   10.0.2.43 
 chat-service-v1-77dcdd8dd7-wtrz2   2/2     Running   0          25s   10.0.4.219   k8s-worker-01   <none>           <none>
 chat-service-v2-5f9f97df9b-g7tqr   2/2     Running   0          25s   10.0.4.103   k8s-worker-01   <none>           <none>
 ```
-> 🚀 **검증 통과**: 어플리케이션 컨테이너와 Istio Envoy 프록시 사이드카가 결합되어 **`2/2 Running`** 상태로 정상 기동되었습니다.
+> **검증 결과**: 어플리케이션 컨테이너와 Istio Envoy 프록시 사이드카가 결합되어 **`2/2 Running`** 상태로 정상 기동되었습니다.
 
 ---
 
@@ -186,7 +186,7 @@ server: istio-envoy
 
 {"version":"v1","status":"ok","cluster":"core-cluster","pool":"stable-90%"}
 ```
-> 💡 **검증 통과**: `server: istio-envoy` 및 `x-envoy-upstream-service-time: 7ms` 헤더를 통해 요청이 HAProxy를 통과하여 Istio Envoy 메시를 거쳐 정상 처리됨을 확인했습니다.
+> **검증 결과**: `server: istio-envoy` 및 `x-envoy-upstream-service-time: 7ms` 헤더를 통해 요청이 HAProxy를 통과하여 Istio Envoy 메시를 거쳐 정상 처리됨을 확인했습니다.
 
 ### 6-2. 50회 연속 요청 가중치 분기 실측 (PowerShell Group-Object)
 ```powershell
@@ -200,7 +200,7 @@ Count Name
    47 {"version":"v1","status":"ok","cluster":"core-cluster","pool":"stable-90%"}
     3 {"version":"v2","status":"ok","cluster":"core-cluster","pool":"CANARY-10%"}
 ```
-> 🎯 **카나리 가중치 달성**: 50회 요청 중 **47회(94%)가 v1(Stable)**으로, **3회(6%)가 v2(Canary)**로 정밀하게 분기되어 **VirtualService의 90:10 카나리 라우팅 정책이 완벽히 작동함**을 증명했습니다.
+> **카나리 가중치 검증**: 50회 요청 중 **47회(94%)가 v1(Stable)**으로, **3회(6%)가 v2(Canary)**로 정밀하게 분기되어 **VirtualService의 90:10 카나리 라우팅 정책이 완벽히 작동함**을 증명했습니다.
 
 ---
 

@@ -28,7 +28,7 @@
 * Drain & Evict     * Drain & Evict     * Drain & Evict
 ```
 
-### 💡 무중단 보장을 위한 3대 안전장치 (Safety Gear)
+### 무중단 보장을 위한 3대 안전장치 (Safety Gear)
 1. **PodDisruptionBudget (PDB)**:
    - `chat-service-pdb`에 `minAvailable: 1`을 선언하여 노드 드레인 시 최소 1개 이상의 서빙 파드가 반드시 살아있도록 K8s Eviction API 수준에서 강제.
 2. **PreStop Hook & Graceful Shutdown**:
@@ -37,7 +37,7 @@
 3. **Core Addon Ingress & Mesh Control Plane HA 스케일 아웃**:
    - 단일 레플리카였던 `istio-ingressgateway`와 `istiod`를 `replicas: 2`로 스케일 아웃하여, 게이트웨이 파드 축출 중에도 다른 워커 노드의 복제본이 트래픽을 끊김 없이 연속 서빙.
 
-### 💡 업그레이드 방식 비교표
+### 업그레이드 방식 비교표
 <table header-row="true">
 <tr>
 <td>비교 항목</td>
@@ -72,7 +72,7 @@
 
 업그레이드 전 과정(32분 이상 소요) 동안 Bastion 워크스테이션에서 `live-traffic-probe.ps1`을 백그라운드로 구동하여 L7 엔드포인트(`http://chat.infra.internal/healthz`)에 쉼 없이 요청을 인입시켰습니다.
 
-### 📊 실시간 트래픽 프로브 최종 결과
+### 실시간 트래픽 프로브 최종 결과
 <table header-row="true">
 <tr>
 <td>총 요청 수 (Total Requests)</td>
@@ -97,7 +97,7 @@
 [15:57:41] TOTAL: 7160 | SUCCESS(200): 7159 | FAILED(5xx): 1 | ErrorRate: 0.01%
 ```
 
-### 🔍 실패 1건 (HTTP 000) 심층 사후 분석 (Post-Mortem)
+### 실패 1건 (HTTP 000) 심층 사후 분석 (Post-Mortem)
 - **증상**: `worker-01` 업그레이드 진행 중 단 1회의 `HTTP 000` 기록.
 - **원인 분석**:
   - `HTTP 000`은 서버가 응답한 502/503 에러가 아니며, 클라이언트(curl) 레벨의 **TCP Handshake Timeout**입니다.
@@ -178,7 +178,7 @@ kubectl uncordon k8s-worker-01
 
 ## 4. 실전 트러블슈팅: PDB 교착 상태(Deadlock) 극복
 
-### 🚨 장애 현상
+### 장애 현상
 `k8s-worker-02` 및 `k8s-worker-03` 드레인 실행 시 콘솔에 아래 에러가 반복되며 노드가 드레인되지 않는 현상 발생:
 ```plain text
 evicting pod istio-system/istio-ingressgateway-xxx
@@ -187,11 +187,11 @@ evicting pod istio-system/istiod-xxx
 error when evicting pods/"istiod-xxx" -n "istio-system" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
 ```
 
-### 🔬 근본 원인 (Root Cause)
+### 근본 원인 (Root Cause)
 - `istio-ingressgateway`와 `istiod`가 단일 복제본(`replicas: 1`)으로 실행 중인 상태에서, Istio Helm 차트에 기본 정의된 PDB(`minAvailable: 1`)가 활성화되어 있었습니다.
 - 복제본이 1개뿐인 파드를 축출하면 순간적으로 가용 파드 수가 0이 되므로, K8s Eviction Controller가 PDB 위반으로 판단하여 파드 퇴출을 거부하고 5초마다 무한 재시도를 반복하는 교착 상태가 발생했습니다.
 
-### 🛠️ 해결 방안 (게이트웨이 사전 다중화)
+### 해결 방안 (게이트웨이 사전 다중화)
 PDB를 강제로 삭제하거나 무시(`--disable-eviction`)하는 것은 서비스 중단을 야기하는 위험한 방식입니다.  
 고가용성 원칙에 따라 **해당 컨트롤러를 사전에 2개 이상으로 스케일 아웃하여 다른 노드에 복제본을 배치**한 후 드레인을 재개하여 안전하게 통과시켰습니다.
 ```bash
@@ -208,7 +208,7 @@ kubectl uncordon k8s-worker-03
 
 ## 5. 최종 클러스터 무결성 검증 (Cluster Verification)
 
-### 📌 클러스터 전체 6개 노드 상태 (`kubectl get nodes -o wide`)
+### 클러스터 전체 6개 노드 상태 (`kubectl get nodes -o wide`)
 ```plain text
 NAME            STATUS   ROLES           AGE     VERSION    INTERNAL-IP     EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION       CONTAINER-RUNTIME
 k8s-cp-01       Ready    control-plane   3h34m   v1.29.10   10.40.101.181   <none>        Ubuntu 22.04.5 LTS   5.15.0-198-generic   containerd://2.4.2        

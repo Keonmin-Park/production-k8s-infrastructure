@@ -25,7 +25,7 @@
                                     * Istio Service Mesh L7 Telemetry
 ```
 
-### 💡 SLI/SLO 알람 아키텍처 비교표
+### SLI/SLO 알람 아키텍처 비교표
 | 비교 항목 | 전통적인 임계치 알람 (CPU > 80%, Error > 1%) | Google SRE Multi-Window Multi-Burn-Rate (본 클러스터 채택) |
 | :--- | :--- | :--- |
 | **알람의 의미 (Signal)** | 단순한 리소스 사용률 (고객 영향도와 직결되지 않음) | **실제 사용자 경험(SLO 99.9%)의 침해 속도(Error Budget 소진율)**를 정확히 반영 |
@@ -101,7 +101,7 @@ prometheus-stack-prometheus-node-exporter-l6sm5          1/1     Running   0    
 prometheus-stack-prometheus-node-exporter-qd5v5          1/1     Running   0          5m    10.40.101.183   k8s-cp-03       <none>           <none>
 prometheus-stack-prometheus-node-exporter-sgthj          1/1     Running   0          5m    10.40.101.181   k8s-cp-01       <none>           <none>
 ```
-> 🚀 **검증 통과**: 11개 파드 전체(Prometheus Server, Alertmanager, Grafana, Operator, KSM, 6개 노드 Node Exporter)가 **`100% Running`**을 달성했습니다.
+> **검증 결과**: 11개 파드 전체(Prometheus Server, Alertmanager, Grafana, Operator, KSM, 6개 노드 Node Exporter)가 **`100% Running`**을 달성했습니다.
 
 ---
 

@@ -41,7 +41,7 @@ sudo ctr --namespace k8s.io run --rm --net-host ghcr.io/kube-vip/kube-vip:v0.7.2
   --leaderElection | sudo tee /etc/kubernetes/manifests/kube-vip.yaml
 ```
 
-> 💡 **kube-vip 고가용성(HA) 동작 원리**: `kube-vip`은 `--arp`와 `--leaderElection` 플래그를 통해 3대의 마스터 노드 중 활성 노드 1대만 VIP를 소유하며, 해당 노드 장애 시 5초 이내에 다른 노드로 VIP가 자동 승계됩니다.
+> **kube-vip 고가용성(HA) 동작 원리**: `kube-vip`은 `--arp`와 `--leaderElection` 플래그를 통해 3대의 마스터 노드 중 활성 노드 1대만 VIP를 소유하며, 해당 노드 장애 시 5초 이내에 다른 노드로 VIP가 자동 승계됩니다.
 
 ---
 
@@ -165,7 +165,7 @@ PING 10.40.101.180 (10.40.101.180) 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.045/0.047/0.050/0.002 ms
 ```
 
-> 💡 **VIP 검증 완료**: `10.40.101.180` 가상 IP가 `0.045ms` 초저지연으로 즉각 응답하여 kube-vip의 L2 ARP 바인딩이 성공했습니다.
+> **VIP 검증 결과**: `10.40.101.180` 가상 IP가 `0.045ms` 초저지연으로 즉각 응답하여 kube-vip의 L2 ARP 바인딩이 성공했습니다.
 
 ---
 
@@ -309,7 +309,7 @@ Cluster Pods:          4/4 managed by Cilium
 Helm chart version:    1.15.5
 ```
 
-> 💡 **Cilium 정상 확인**: 6개 노드 전체에서 Cilium 에이전트가 6/6 `Ready`이며, Hubble Relay와 Hubble UI까지 100% 정상 가동되었습니다.
+> **Cilium 정상 확인**: 6개 노드 전체에서 Cilium 에이전트가 6/6 `Ready`이며, Hubble Relay와 Hubble UI까지 100% 정상 가동되었습니다.
 
 ---
 
@@ -325,4 +325,4 @@ k8s-worker-02   Ready    <none>          3m34s   v1.28.15   10.40.101.185   <non
 k8s-worker-03   Ready    <none>          3m1s    v1.28.15   10.40.101.186   <none>        Ubuntu 22.04.5 LTS   5.15.0-198-generic   containerd://2.4.2
 ```
 
-> 🚀 6대 노드 전체가 정상 **`Ready`** 상태를 달성하여 고가용성 인프라 부트스트랩이 완료되었습니다.
+> **검증 완료**: 6대 노드 전체가 정상 **`Ready`** 상태를 달성하여 고가용성 인프라 부트스트랩이 완료되었습니다.

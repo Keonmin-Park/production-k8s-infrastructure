@@ -43,7 +43,7 @@ k version --client
 
 ## 3. Step 2: 마스터 노드 Kubeconfig 무결성 전송 (`scp`)
 
-### ⚠️ 트러블슈팅 사례: 터미널 텍스트 복사-붙여넣기 시 RSA 개인키 손상
+### 트러블슈팅 사례: 터미널 텍스트 복사-붙여넣기 시 RSA 개인키 손상
 * **문제 현상**: `cp-01` 터미널에서 `cat ~/.kube/config`로 출력된 텍스트를 복사하여 Windows에 저장한 후 `kubectl` 실행 시 `error: tls: failed to parse private key` 에러 발생.
 * **근본 원인**: 터미널 콘솔의 가로폭 줄바꿈(Word Wrap) 및 폰트 합자/특수문자 처리 과정에서 Base64 문자열 일부가 왜곡(예: `NAHJ`가 `N@ J`로 치환)되어 RSA Private Key의 ASN.1 DER 구조가 깨짐.
 * **해결책**: 터미널 클립보드를 거치지 않고 OpenSSH scp 명령어를 사용하여 파일을 온전히 전송함.
@@ -137,5 +137,5 @@ kube-system   kube-vip-k8s-cp-01                  1/1     Running   1 (33m ago) 
 kube-system   kube-vip-k8s-cp-02                  1/1     Running   0             32m
 kube-system   kube-vip-k8s-cp-03                  1/1     Running   0             33m
 ```
-> 🚀 **검증 성공**: Windows 로컬 PC가 정식 Bastion 워크스테이션으로 등록되어, 향후 모든 매니페스트 배포, Helm 릴리즈, 카나리 트래픽 분기 실습을 로컬에서 직접 제어할 수 있습니다.
+> **검증 성공**: Windows 로컬 PC가 정식 Bastion 워크스테이션으로 등록되어, 향후 모든 매니페스트 배포, Helm 릴리즈, 카나리 트래픽 분기 실습을 로컬에서 직접 제어할 수 있습니다.
 
