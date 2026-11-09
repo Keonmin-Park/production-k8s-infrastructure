@@ -1,0 +1,43 @@
+# 대용량 트래픽 클러스터를 위한 Cilium eBPF 튜닝 Values
+k8sServiceHost: "${CONTROL_PLANE_VIP}"      # Control Plane VIP
+k8sServicePort: "6443"
+
+# kube-proxy 완전 대체 (iptables 체인 제거 및 eBPF 네이티브 L4 LB)
+kubeProxyReplacement: "true"
+
+# eBPF 호스트 라우팅 활성화 (veth 페어 통과 시 네트워크 스택 우회)
+bpf:
+  masquerade: true
+  hostRouting: true
+
+# 소켓 레벨 로드밸런싱 및 TCP 가속 (Istio 사이드카 통신 15~25% 가속의 핵심)
+sockops:
+  enabled: true
+
+# 터널링 모드 설정: On-Prem vSphere L2 네트워크 환경에서는 native-routing 권장 (Geneve/VxLAN 오버헤드 제거)
+routingMode: native
+autoDirectNodeRoutes: true
+ipv4NativeRoutingCIDR: "${POD_SUBNET}"
+
+# 커넥션 트래킹(conntrack) 맵 크기 확장 (대규모 동시 커넥션 트래픽 대응)
+bpfCTGlobalAnyMax: 524288
+bpfCTGlobalTCPMax: 1048576
+
+# 네트워크 옵저버빌리티 (Hubble) 활성화
+hubble:
+  enabled: true
+  metrics:
+    enabled:
+      - dns:query;ignoreAAAA
+      - drop
+      - tcp
+      - flow
+      - port-distribution
+      - icmp
+      - http
+    serviceMonitor:
+      enabled: true
+  relay:
+    enabled: true
+  ui:
+    enabled: true

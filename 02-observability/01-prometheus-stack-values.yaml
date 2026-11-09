@@ -1,0 +1,84 @@
+# -------------------------------------------------------------
+# Enterprise SRE Cluster Part - Production Observability Stack
+# Target: 21M MAU Scale-out Monitoring (Prometheus + Grafana + KSM + Node Exporter)
+# -------------------------------------------------------------
+
+prometheusOperator:
+  enabled: true
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+prometheus:
+  enabled: true
+  prometheusSpec:
+    # 21M MAU 대규모 환경: PodMonitor/ServiceMonitor를 모든 네임스페이스에서 제한 없이 수집
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+    serviceMonitorSelector: {}
+    podMonitorSelector: {}
+    ruleSelector: {}
+
+    retention: 15d
+    retentionSize: "20GiB"
+    enableAdminAPI: true
+
+    resources:
+      requests:
+        cpu: 500m
+        memory: 1Gi
+      limits:
+        cpu: 2000m
+        memory: 4Gi
+
+    # Prometheus 자체 보안 및 안정성 튜닝
+    securityContext:
+      runAsUser: 1000
+      runAsNonRoot: true
+      fsGroup: 2000
+
+alertmanager:
+  enabled: true
+  alertmanagerSpec:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+
+grafana:
+  enabled: true
+  adminPassword: "${GRAFANA_ADMIN_PASSWORD}"
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      labelValue: "1"
+      searchNamespace: ALL
+    datasources:
+      enabled: true
+      label: grafana_datasource
+      defaultDatasourceEnabled: true
+
+nodeExporter:
+  enabled: true
+  operatingSystems:
+    linux:
+      enabled: true
+
+kubeStateMetrics:
+  enabled: true

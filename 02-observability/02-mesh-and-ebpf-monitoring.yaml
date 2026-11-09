@@ -1,0 +1,67 @@
+# -------------------------------------------------------------
+# Enterprise SRE Cluster Part - Istio Mesh & Envoy Proxy PodMonitor
+# Scrapes Envoy L7 telemetry from sidecars and gateways (:15090)
+# -------------------------------------------------------------
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: envoy-stats
+  namespace: monitoring
+  labels:
+    release: prometheus-stack
+spec:
+  selector:
+    matchExpressions:
+      - key: istio
+        operator: Exists
+  namespaceSelector:
+    any: true
+  podMetricsEndpoints:
+    - port: http-envoy-prom
+      path: /stats/prometheus
+      interval: 15s
+      scrapeTimeout: 10s
+---
+# -------------------------------------------------------------
+# Istiod Control Plane ServiceMonitor (:15014)
+# -------------------------------------------------------------
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: istiod-monitor
+  namespace: monitoring
+  labels:
+    release: prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      app: istiod
+  namespaceSelector:
+    matchNames:
+      - istio-system
+  endpoints:
+    - port: http-monitoring
+      path: /metrics
+      interval: 15s
+---
+# -------------------------------------------------------------
+# Cilium eBPF Agent & Operator ServiceMonitor
+# -------------------------------------------------------------
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: cilium-agent-monitor
+  namespace: monitoring
+  labels:
+    release: prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      k8s-app: cilium
+  namespaceSelector:
+    matchNames:
+      - kube-system
+  endpoints:
+    - port: prometheus
+      path: /metrics
+      interval: 15s

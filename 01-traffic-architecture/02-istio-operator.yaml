@@ -1,0 +1,50 @@
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+metadata:
+  namespace: istio-system
+  name: istio-control-plane
+spec:
+  profile: default
+  meshConfig:
+    accessLogFile: /dev/stdout
+    accessLogEncoding: JSON
+    accessLogFormat: |
+      {
+        "start_time": "%START_TIME%",
+        "method": "%REQ(:METHOD)%",
+        "path": "%REQ(X-ENVOY-ORIGINAL-PATH?:PATH)%",
+        "protocol": "%PROTOCOL%",
+        "response_code": "%RESPONSE_CODE%",
+        "response_flags": "%RESPONSE_FLAGS%",
+        "response_code_details": "%RESPONSE_CODE_DETAILS%",
+        "bytes_received": "%BYTES_RECEIVED%",
+        "bytes_sent": "%BYTES_SENT%",
+        "duration_ms": "%DURATION%",
+        "upstream_service_time_ms": "%RESP(X-ENVOY-UPSTREAM-SERVICE-TIME)%",
+        "downstream_remote_address": "%DOWNSTREAM_REMOTE_ADDRESS%",
+        "downstream_local_address": "%DOWNSTREAM_LOCAL_ADDRESS%",
+        "upstream_host": "%UPSTREAM_HOST%",
+        "upstream_cluster": "%UPSTREAM_CLUSTER%",
+        "x_request_id": "%REQ(X-REQUEST-ID)%",
+        "traceparent": "%REQ(TRACEPARENT)%"
+      }
+    enableAutoMtls: true
+    defaultConfig:
+      holdApplicationUntilProxyStarts: true
+      concurrency: 2
+      proxyStatsMatcher:
+        inclusionPrefixes:
+          - "cluster.outbound"
+          - "http.inbound"
+  components:
+    ingressGateways:
+      - name: istio-ingressgateway
+        enabled: true
+        k8s:
+          resources:
+            requests:
+              cpu: 1000m
+              memory: 1Gi
+            limits:
+              cpu: 2000m
+              memory: 2Gi

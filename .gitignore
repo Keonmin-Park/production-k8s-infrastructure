@@ -1,0 +1,19 @@
+# OS / Editor files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Environment variables & secrets (keep .example committed)
+*.env
+!*.env.example
+cluster.env
+!cluster.env.example
+
+# Rendered manifests & temporary deployment outputs
+**/rendered/
+*.rendered.yaml
+*.rendered.yml
+
+# Logs & temp
+*.log

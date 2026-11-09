@@ -1,0 +1,98 @@
+# 1. PodDisruptionBudget (PDB)
+# 노드가 점검(drain)에 들어가더라도 chat-service 파드는 최소 1개 이상 항상 살아있어야 함
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: chat-service-pdb
+  namespace: default
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: chat-service
+---
+# 2. chat-service-v1에 Graceful Shutdown (preStop Hook) 추가
+# 파드가 종료 신호(SIGTERM)를 받았을 때, Envoy와 eBPF 엔드포인트 목록에서 먼저 제거될 수 있도록
+# 10초간 대기(sleep 10)한 후 프로세스를 종료하여 패킷 유실을 0으로 만듦
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chat-service-v1
+  namespace: default
+  labels:
+    app: chat-service
+    version: v1
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: chat-service
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: chat-service
+        version: v1
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: chat-server
+          image: hashicorp/http-echo:1.0.0
+          args:
+            - "-listen=:50051"
+            - "-text={\"version\":\"v1\",\"status\":\"ok\",\"cluster\":\"core-cluster\",\"pool\":\"stable-90%\"}\n"
+          ports:
+            - containerPort: 50051
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "sleep 10"]
+          resources:
+            requests:
+              cpu: 100m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+---
+# 3. chat-service-v2 (Canary)에도 동일하게 안전장치 적용
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chat-service-v2
+  namespace: default
+  labels:
+    app: chat-service
+    version: v2
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: chat-service
+      version: v2
+  template:
+    metadata:
+      labels:
+        app: chat-service
+        version: v2
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: chat-server
+          image: hashicorp/http-echo:1.0.0
+          args:
+            - "-listen=:50051"
+            - "-text={\"version\":\"v2\",\"status\":\"ok\",\"cluster\":\"core-cluster\",\"pool\":\"CANARY-10%\"}\n"
+          ports:
+            - containerPort: 50051
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "sleep 10"]
+          resources:
+            requests:
+              cpu: 100m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
