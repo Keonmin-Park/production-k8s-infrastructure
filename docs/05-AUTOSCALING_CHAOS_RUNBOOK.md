@@ -48,7 +48,7 @@
 <tr>
 <td>**노드 하드웨어 장애 대응**</td>
 <td>온콜 엔지니어가 수동으로 파드를 다른 노드로 옮길 때까지 서비스 마비</td>
-<td>**K8s Self-Healing + Ingress Gateway HA**로 무중단 트래픽 우회 검증 완료</td>
+<td>**K8s Self-Healing + Ingress Gateway HA**로 트래픽 우회 검증 완료 (Gateway 다중화 적용 후)</td>
 </tr>
 <tr>
 <td>**단일 장애점(SPOF) 방어**</td>
@@ -158,7 +158,7 @@ kubectl -n istio-system scale deploy istio-ingressgateway --replicas=2
 - 게이트웨이가 뜨자마자 클러스터 전체 트래픽이 즉시 **`HTTP 200 OK`로 100% 정상 복구**되었습니다!
 
 > **운영 시사점 및 아키텍처 원칙**:
-> Ingress Gateway, CoreDNS, Ingress Controller 등 클러스터 전역 트래픽 진입점은 **절대로 단일 복제본(`replicas: 1`)으로 운영해서는 안 되며**, 반드시 **`replicas: 2` 이상 + `PodAntiAffinity`**를 적용하여 물리 노드 간 분산 배치를 강제해야만 노드 불시 장애 시 무중단을 달성할 수 있습니다.
+> Ingress Gateway, CoreDNS, Ingress Controller 등 클러스터 전역 트래픽 진입점은 **절대로 단일 복제본(`replicas: 1`)으로 운영해서는 안 되며**, 반드시 **`replicas: 2` 이상 + `PodAntiAffinity`**를 적용하여 물리 노드 간 분산 배치를 강제해야만 노드 불시 장애 시 서비스 영향을 줄일 수 있습니다.
 
 ---
 

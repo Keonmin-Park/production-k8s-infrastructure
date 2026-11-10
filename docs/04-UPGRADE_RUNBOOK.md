@@ -1,10 +1,10 @@
-# 04-cluster-upgrade: PDB & Graceful Shutdown 기반 v1.28 -> v1.29 무중단 롤링 업그레이드
+# 04-cluster-upgrade: PDB & Graceful Shutdown 기반 v1.28 -> v1.29 롤링 업그레이드
 
-실시간 트래픽을 서빙하는 환경에서 `PDB(PodDisruptionBudget)`와 `preStop(10s)` 훅을 적용하여, 서비스 중단 없이 쿠버네티스 제어면(Control Plane 3대) 및 워커 노드(Worker 3대)를 v1.28.15에서 v1.29.10으로 승격시킨 실전 무중단 롤링 업그레이드(Zero-Downtime Rolling Upgrade) 런북입니다. (총 7,160건 라이브 프로브 중 가용성 99.986% 달성)
+실시간 트래픽을 서빙하는 환경에서 `PDB(PodDisruptionBudget)`와 `preStop(10s)` 훅을 적용하여, 서비스 중단을 최소화하며 쿠버네티스 제어면(Control Plane 3대) 및 워커 노드(Worker 3대)를 v1.28.15에서 v1.29.10으로 승격시킨 롤링 업그레이드 런북입니다. (총 7,160건 프로브 중 1건 실패, 성공률 99.986%. 32분·약 4 RPS 규모의 랩 단일 실행 결과로 통계적 의미는 제한적)
 
 ---
 
-## 1. 무중단 롤링 업그레이드 아키텍처 토폴로지 & 3대 안전장치
+## 1. 롤링 업그레이드 아키텍처 토폴로지 & 3대 안전장치
 
 ```plain text
 [클라이언트 트래픽 / Bastion Traffic Probe (7,160 Req)]
@@ -28,7 +28,7 @@
 * Drain & Evict     * Drain & Evict     * Drain & Evict
 ```
 
-### 무중단 보장을 위한 3대 안전장치 (Safety Gear)
+### 중단 최소화를 위한 3대 안전장치 (Safety Gear)
 1. **PodDisruptionBudget (PDB)**:
    - `chat-service-pdb`에 `minAvailable: 1`을 선언하여 노드 드레인 시 최소 1개 이상의 서빙 파드가 반드시 살아있도록 K8s Eviction API 수준에서 강제.
 2. **PreStop Hook & Graceful Shutdown**:
@@ -42,12 +42,12 @@
 <tr>
 <td>비교 항목</td>
 <td>전통적인 점검 시간(Maintenance Window) 다운타임 방식</td>
-<td>SRE 무중단 롤링 업그레이드 (본 클러스터 채택)</td>
+<td>SRE 롤링 업그레이드 (본 클러스터 채택)</td>
 </tr>
 <tr>
 <td>**서비스 가용성**</td>
 <td>새벽 시간대 전체 서비스 중단 공지 및 사용자 인입 차단</td>
-<td>**24/365 무중단 서빙**, 라이브 트래픽 인입 상태에서 노드 순차 교체</td>
+<td>라이브 트래픽 인입 상태에서 노드 순차 교체 (랩 검증 기준, 운영 가용성 보증 아님)</td>
 </tr>
 <tr>
 <td>**트래픽 연속성 검증**</td>
@@ -68,7 +68,7 @@
 
 ---
 
-## 2. 실전 무중단 라이브 트래픽 프로브 검증 (Live Traffic Verification)
+## 2. 라이브 트래픽 프로브 검증 (Live Traffic Verification)
 
 업그레이드 전 과정(32분 이상 소요) 동안 Bastion 워크스테이션에서 `live-traffic-probe.ps1`을 백그라운드로 구동하여 L7 엔드포인트(`http://chat.infra.internal/healthz`)에 쉼 없이 요청을 인입시켰습니다.
 
@@ -86,7 +86,7 @@
 <td>**7,159 건**</td>
 <td>**1 건 (HTTP 000)**</td>
 <td>**0.014%**</td>
-<td>**99.986% (SLO 99.9% 초과 달성)**</td>
+<td>**99.986% (랩 단일 실행, 표본 7,160건)**</td>
 </tr>
 </table>
 

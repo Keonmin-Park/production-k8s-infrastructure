@@ -1,6 +1,6 @@
 # 03-observability: Prometheus & Grafana & Google SRE Multi-Burn-Rate SLI/SLO
 
-대규모 엔터프라이즈 트래픽 환경에서 단순 리소스 임계치 알람의 한계(Alert Fatigue)를 극복하고, 서비스 가용성(SLO 99.9%) 기반의 에러 예산(Error Budget) 번 레이트 관측 및 통합 관측성(Prometheus Operator + Grafana + Istio L7 / Cilium eBPF Telemetry)을 구축한 실전 운영 런북입니다.
+단순 리소스 임계치 알람의 한계(Alert Fatigue)를 극복하고, 서비스 가용성(SLO 99.9%) 기반의 에러 예산(Error Budget) 번 레이트 관측 및 통합 관측성(Prometheus Operator + Grafana + Istio L7 / Cilium eBPF Telemetry)을 랩 환경에서 구성한 런북입니다.
 
 ---
 
@@ -128,7 +128,7 @@ servicemonitor.monitoring.coreos.com/cilium-agent-monitor created
 
 ## 4. Step 3: [검증 완료] Google SRE 표준 Multi-Window Multi-Burn-Rate SLI/SLO 알람 룰 배포
 
-엔터프라이즈 메인 서비스인 `chat-service`(목표 가용성 99.9%, 월간 에러 예산 0.1%)의 에러 예산 소진율을 2중 윈도우로 계산하는 프로덕션 알람 룰을 배포했습니다.
+랩 검증용 서비스인 `chat-service`(목표 가용성 99.9%, 월간 에러 예산 0.1%)의 에러 예산 소진율을 2중 윈도우로 계산하는 알람 룰을 배포했습니다(합성 부하 기준, 실제 사용자 트래픽 아님).
 
 ### 4-1. 번 레이트(Burn Rate) 수학적 모델
 * 30일(720시간) 동안 0.1%의 에러 예산을 100% 소진하는 정상적인 소비 속도를 **Burn Rate = 1.0x**로 정의합니다.

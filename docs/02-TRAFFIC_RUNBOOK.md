@@ -1,6 +1,6 @@
 # 02-traffic-architecture: HAProxy Ingress & Istio Service Mesh
 
-대규모 엔터프라이즈 트래픽을 무중단으로 수용하고 안정적인 P99 레이턴시를 보장하기 위해 구축한 **엔터프라이즈 트래픽 인프라(HAProxy Ingress HostPort + Istio Service Mesh 1.21 + PROXY Protocol v2 + mTLS STRICT + 90:10 카나리 라우팅 + Hubble eBPF 관측성)** 실전 구축 및 운영 런북입니다.
+랩 환경에서 L7 트래픽 경로를 구축하고 동작을 검증하기 위해 구성한 **엔터프라이즈 트래픽 인프라(HAProxy Ingress HostPort + Istio Service Mesh 1.21 + PROXY Protocol v2 + mTLS STRICT + 90:10 카나리 라우팅 + Hubble eBPF 관측성)** 구축 및 검증 런북입니다(랩 환경 기준, P99 레이턴시 보장 수치는 측정하지 않음).
 
 ---
 
