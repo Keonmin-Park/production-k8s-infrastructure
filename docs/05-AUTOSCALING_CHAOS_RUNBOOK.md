@@ -1,6 +1,6 @@
 # 05-autoscaling-chaos: HPA 파드 오토스케일링 & 카오스 엔지니어링 (노드 장애 주입)
 
-대규모 트래픽 급증(Spike) 상황을 대비하여, Kubernetes HPA(Horizontal Pod Autoscaler) 기반의 동적 파드 확장(2개 -> 10개)과 고부하 서빙 중 실전 노드 하드웨어 불시 장애(Hard Crash / Kernel Panic)를 시뮬레이션한 카오스 엔지니어링(Chaos Engineering) 실증 런북입니다.
+트래픽 급증(Spike) 상황에 대응하기 위해 Kubernetes HPA(Horizontal Pod Autoscaler) 기반의 동적 파드 확장(2개 -> 10개) 및 고부하 서빙 환경에서의 노드 하드웨어 장애(Hard Crash / Kernel Panic) 복원력을 검증한 카오스 엔지니어링(Chaos Engineering) 실증 런북입니다.
 
 ---
 

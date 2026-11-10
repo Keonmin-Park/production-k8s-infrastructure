@@ -1,15 +1,15 @@
 # Production Kubernetes Infrastructure: Vanilla K8s HA 클러스터 구축 및 대규모 트래픽·복원력 실증
 
-> **참고:** 본 저장소는 개인 SRE 엔지니어링 실증 연구를 위해 구축한 독립 랩 환경입니다.
+> **참고:** 본 저장소는 SRE 엔지니어링 실증 및 아키텍처 검증을 위해 구축한 독립 랩 환경입니다.
 
-기존 Red Hat OpenShift 환경을 운영하던 인프라 엔지니어가, 상위 플랫폼 추상화(CVO, OpenShift Router, Machine Config 등)에 가려져 있던 쿠버네티스 원천 기술(Vanilla K8s)의 코어 동작 원리를 깊이 있게 이해하고 검증하기 위해 vSphere 온프레미스 베이스 노드(6대)에 직접 구축한 고가용성(HA) 클러스터 및 실전 엔지니어링 실증 프로젝트입니다.
+OpenShift 환경 운영 경험을 바탕으로, 상위 플랫폼 추상화(CVO, Machine Config 등)에 가려져 있던 **Kubernetes 코어 동작 원리(Vanilla K8s)를 검증하기 위해 vSphere 온프레미스 환경에 구축한 고가용성(HA 6노드) 클러스터 및 엔지니어링 실증 저장소**입니다.
 
 ---
 
 ## 프로젝트 엔지니어링 배경 (Background & Motivation)
-- **OpenShift -> Vanilla K8s 코어 확장**: 플랫폼이 자동화해 주던 제어면 고가용성(`kube-vip`), 커널 레벨 네트워크(`Cilium eBPF`), 서비스 메시(`Istio`), 인그레스(`HAProxy`)를 Bare-Metal/VM 레벨부터 직접 구성하여 K8s 원천 기술 내재화.
-- **대규모 트래픽 아키텍처 실증**: 초당 수백 회 이상의 버스트 트래픽 인입 상황에서 L7 프록시 체인(`HAProxy Ingress` -> `Istio Ingress Gateway` -> `Envoy Sidecar`)의 지연 시간을 최소화하고 원본 IP를 보존하는 `PROXY Protocol v2` 및 `Cilium eBPF Sockops` 가속 검증.
-- **무중단 운영(Zero-Downtime) & 복원력(Resilience)**: `PDB(PodDisruptionBudget)`와 `preStop(10s)` 훅을 적용한 라이브 트래픽 서빙 중 무중단 롤링 업그레이드(7,160건 검증, 99.986% 가용성) 및 HPA 550+ RPS 스케일 아웃과 노드 불시 다운 카오스 엔지니어링(Chaos Engineering) 완수.
+- **OpenShift ➔ Vanilla K8s 코어 확장**: 플랫폼 자동화 영역이었던 제어면 고가용성(`kube-vip`), 커널 레벨 네트워크(`Cilium eBPF`), 서비스 메시(`Istio`), 인그레스(`HAProxy`)를 베어메탈/VM 레벨부터 직접 설계·구축하여 K8s 원천 기술 내재화.
+- **대규모 트래픽 아키텍처 실증**: L7 프록시 체인(`HAProxy Ingress` ➔ `Istio Ingress Gateway` ➔ `Envoy Sidecar`)에서 지연 시간을 최소화하고 클라이언트 원본 IP를 보존하기 위해 `PROXY Protocol v2` 및 `Cilium eBPF Sockops` 가속 검증.
+- **무중단 운영(Zero-Downtime) & 복원력(Resilience)**: `PodDisruptionBudget`과 `preStop(10s)` 훅을 적용하여 실시간 트래픽 서빙 중 v1.28 ➔ v1.29 무중단 롤링 업그레이드(7,160건 검증, 가용성 99.986%) 및 HPA 부하 스케일링, 워커 노드 불시 장애(Hard Crash) 카오스 엔지니어링 완수.
 
 ---
 

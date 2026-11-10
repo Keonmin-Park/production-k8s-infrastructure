@@ -1,6 +1,6 @@
 # 04-cluster-upgrade: PDB & Graceful Shutdown 기반 v1.28 -> v1.29 무중단 롤링 업그레이드
 
-대규모 엔터프라이즈 트래픽을 처리하는 프로덕션 클러스터 환경에서, 단 한 건의 유의미한 서비스 중단이나 5xx 에러 없이 쿠버네티스 제어면(Control Plane 3대) 및 워커 노드(Worker 3대)를 v1.28.15에서 v1.29.10으로 안전하게 승격시킨 실전 무중단 롤링 업그레이드(Zero-Downtime Rolling Upgrade) 런북입니다.
+실시간 트래픽을 서빙하는 환경에서 `PDB(PodDisruptionBudget)`와 `preStop(10s)` 훅을 적용하여, 서비스 중단 없이 쿠버네티스 제어면(Control Plane 3대) 및 워커 노드(Worker 3대)를 v1.28.15에서 v1.29.10으로 승격시킨 실전 무중단 롤링 업그레이드(Zero-Downtime Rolling Upgrade) 런북입니다. (총 7,160건 라이브 프로브 중 가용성 99.986% 달성)
 
 ---
 
